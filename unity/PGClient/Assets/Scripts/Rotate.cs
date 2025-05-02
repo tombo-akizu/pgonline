@@ -2,15 +2,16 @@ using UnityEngine;
 
 public class Rotate : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    private int rotation = 0;
 
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
-        this.transform.Rotate(0, 1, 0);
+        this.transform.Rotate(0, this.rotation, 0);
+    }
+
+    public void SetRotation(int rotation)
+    {
+        this.rotation = rotation;
     }
 }
