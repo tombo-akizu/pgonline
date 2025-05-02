@@ -1,21 +1,9 @@
-//! A simple echo server.
-//!
-//! You can test this out by running:
-//!
-//!     cargo run --example echo-server 127.0.0.1:12345
-//!
-//! And then in another window run:
-//!
-//!     cargo run --example client ws://127.0.0.1:12345/
-//!
-//! Type a message into the client window, press enter to send it and
-//! see it echoed back.
-
 use std::{env, io::Error};
 
-use futures_util::{future, StreamExt, TryStreamExt};
+use futures_util::{SinkExt, StreamExt};
 use log::info;
 use tokio::net::{TcpListener, TcpStream};
+use tokio_tungstenite::tungstenite::{protocol::Message, Bytes};
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -44,10 +32,43 @@ async fn accept_connection(stream: TcpStream) {
 
     info!("New WebSocket connection: {}", addr);
 
-    let (write, read) = ws_stream.split();
+    let (mut write, mut read) = ws_stream.split();
     // We should not forward messages other than text or binary.
-    read.try_filter(|msg| future::ready(msg.is_text() || msg.is_binary()))
-        .forward(write)
-        .await
-        .expect("Failed to forward messages")
+    // read.try_filter(|msg| future::ready(msg.is_text() || msg.is_binary()))
+    //     .forward(write)
+    //     .await
+    //     .expect("Failed to forward messages")
+
+    while let Some(msg_result) = read.next().await {
+        match msg_result {
+            Ok(Message::Binary(data)) => {
+                println!("Received binary: {:?}", data);
+
+                let response = match data.get(0) {
+                    Some(0x00) => vec![0x00],
+                    Some(0x01) => vec![0x01],
+                    Some(0x02) => vec![0x02],
+                    Some(0x03) => vec![0x00],
+                    _ => {
+                        info!("unknown byte...");
+                        vec![0x00]
+                    }
+                };
+
+                write.send(Message::Binary(Bytes::from(response))).await.unwrap();
+            }
+
+            Ok(Message::Text(text)) => {
+                println!("Received text: {}", text);
+                write.send(Message::Text("Binary only!".into())).await.unwrap();
+            }
+
+            Ok(Message::Close(_)) => {
+                println!("Connection closed");
+                break;
+            }
+
+            _ => {}
+        }
+    }
 }
