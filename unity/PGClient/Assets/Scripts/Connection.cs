@@ -7,12 +7,14 @@ using NativeWebSocket;
 
 public class Connection : MonoBehaviour
 {
+    private const float FPS = 1f / 30;
+
     private WebSocket websocket;
     private InputObserver observer;
     private Rotate rotate;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    async void Start()
+    private async void Start()
     {
         this.websocket = new WebSocket("ws://localhost:3000");
         this.observer = FindFirstObjectByType<InputObserver>();
@@ -50,22 +52,21 @@ public class Connection : MonoBehaviour
             }
         };
 
-        // Keep sending messages at every 0.3s
-        this.InvokeRepeating(nameof(SendWebSocketMessage), 0.0f, 0.3f);
+        this.InvokeRepeating(nameof(SendWebSocketMessage), 0.0f, FPS);
 
         // waiting for messages
         await this.websocket.Connect();
     }
 
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
 #if !UNITY_WEBGL || UNITY_EDITOR
         this.websocket.DispatchMessageQueue();
 #endif
     }
 
-    async void SendWebSocketMessage()
+    private async void SendWebSocketMessage()
     {
         if (this.websocket.State == WebSocketState.Open)
         {

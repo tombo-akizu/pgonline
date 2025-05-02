@@ -1,21 +1,25 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class InputObserver : MonoBehaviour
 {
     private bool rightIsInputed = false;
     private bool leftIsInputed = false;
 
+    private InputAction move;
+
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    private void Start()
+    {
+        this.move = FindFirstObjectByType<PlayerInput>().actions["Move"];
+    }
+
     // Update is called once per frame
     private void Update()
     {
-        if (Input.GetKey(KeyCode.RightArrow))
-        {
-            this.rightIsInputed = true;
-        }
-        if (Input.GetKey(KeyCode.LeftArrow))
-        {
-            this.leftIsInputed = true;
-        }
+        Vector2 input = this.move.ReadValue<Vector2>();
+        this.rightIsInputed = input.x > 0;
+        this.leftIsInputed = input.x < 0;
     }
 
     public byte[] PopInputByte()
