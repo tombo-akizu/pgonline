@@ -42,7 +42,7 @@ async fn accept_connection(stream: TcpStream) {
     while let Some(msg_result) = read.next().await {
         match msg_result {
             Ok(Message::Binary(data)) => {
-                println!("Received binary: {:?}", data);
+                info!("Received binary: {:?}", data);
 
                 let response = match data.get(0) {
                     Some(0x00) => vec![0x00],
@@ -59,12 +59,12 @@ async fn accept_connection(stream: TcpStream) {
             }
 
             Ok(Message::Text(text)) => {
-                println!("Received text: {}", text);
+                info!("Received text: {}", text);
                 write.send(Message::Text("Binary only!".into())).await.unwrap();
             }
 
             Ok(Message::Close(_)) => {
-                println!("Connection closed");
+                info!("Connection closed");
                 break;
             }
 
