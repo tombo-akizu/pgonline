@@ -11,14 +11,14 @@ public class Connection : MonoBehaviour
 
     private WebSocket websocket;
     private InputObserver observer;
-    private Rotate rotate;
+
+    [SerializeField] Transform[] cubes;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private async void Start()
     {
         this.websocket = new WebSocket("ws://localhost:3000");
         this.observer = FindFirstObjectByType<InputObserver>();
-        this.rotate = FindFirstObjectByType<Rotate>();
 
         this.websocket.OnOpen += () =>
         {
@@ -38,18 +38,14 @@ public class Connection : MonoBehaviour
         this.websocket.OnMessage += (bytes) =>
         {
             Debug.Log("OnMessage!");
-            switch (bytes[0])
-            {
-                case 0:
-                    this.rotate.SetRotation(0);
-                    break;
-                case 1:
-                    this.rotate.SetRotation(1);
-                    break;
-                case 2:
-                    this.rotate.SetRotation(-1);
-                    break;
-            }
+
+            float x0 = BitConverter.ToSingle(bytes, 0);
+            float z0 = BitConverter.ToSingle(bytes, 4);
+            float x1 = BitConverter.ToSingle(bytes, 8);
+            float z1 = BitConverter.ToSingle(bytes, 12);
+
+            this.cubes[0].position = new Vector3(x0, 0, z0);
+            this.cubes[1].position = new Vector3(x1, 0, z1);
         };
 
         this.InvokeRepeating(nameof(SendWebSocketMessage), 0.0f, FPS);
