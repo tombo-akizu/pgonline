@@ -10,11 +10,11 @@
 
 # Server > Client
 計16Byte
-- byte 0-4:
+- byte 0-3:
   - 自身のx座標を表す。
-- byte 5-8:
+- byte 4-7:
   - 自身のz座標を表す。
-- byte 9-12:
+- byte 8-11:
   - 他者のx座標を表す。
-- byte 13-16:
+- byte 12-15:
   - 他者のz座標を表す。
