@@ -156,7 +156,15 @@ async fn send_output(
     index: usize
 ) {
     loop {
-        write.send(Message::Binary(Bytes::from(output_memory.lock().await.encode(index)))).await.unwrap();
+        let send_result = write
+            .send(Message::Binary(Bytes::from(output_memory.lock().await.encode(index))))
+            .await;
+        match send_result {
+            Err(tokio_tungstenite::tungstenite::Error::Protocol(tokio_tungstenite::tungstenite::error::ProtocolError::SendAfterClosing)) => {
+                break;
+            }
+            _ => {}
+        }
     }
 }
 
