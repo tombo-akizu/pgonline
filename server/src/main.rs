@@ -1,4 +1,5 @@
 mod game;
+mod util;
 
 use std::collections::VecDeque;
 use std::{env, io::Error};
@@ -11,6 +12,8 @@ use tokio::sync::Mutex;
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::{protocol::Message, Bytes};
+
+use game::{InputMemory, OutputMemory};
 
 type Ws = WebSocketStream<tokio::net::TcpStream>;
 
@@ -42,65 +45,6 @@ async fn main() -> Result<(), Error> {
     }
 
     Ok(())
-}
-
-pub struct InputMemory {
-    pub right_inputs: [bool; 2],
-    pub left_inputs: [bool; 2],
-}
-
-impl InputMemory {
-    pub fn new() -> Self {
-        Self {
-            right_inputs: [false, false],
-            left_inputs: [false, false],
-        }
-    }
-
-    pub fn update(&mut self, byte: u8, index: usize) {
-        self.right_inputs[index] = byte == 0x01;
-        self.left_inputs[index] = byte == 0x02;
-    }
-}
-
-pub struct OutputMemory {
-    pub xs: [f32; 2],
-    pub zs: [f32; 2],
-}
-
-impl OutputMemory {
-    pub fn new() -> Self {
-        Self {
-            xs: [0., 0.],
-            zs: [0., 0.],
-        }
-    }
-
-    pub fn encode(&self, index: usize) -> Vec<u8> {
-        let mut output = vec![];
-        let myx = self.xs[index].to_le_bytes().to_vec();
-        let myz = self.zs[index].to_le_bytes().to_vec();
-        let (other_x, other_z) = match index {
-            0 => {
-                (
-                    self.xs[1].to_le_bytes().to_vec(),
-                    self.zs[1].to_le_bytes().to_vec()
-                )
-            },
-            1 => {
-                (
-                    self.xs[0].to_le_bytes().to_vec(),
-                    self.zs[0].to_le_bytes().to_vec()
-                )
-            },
-            _ => panic!()
-        };
-        output.extend(myx);
-        output.extend(myz);
-        output.extend(other_x);
-        output.extend(other_z);
-        output
-    }
 }
 
 async fn game_2p(players: [Ws; 2]) {
