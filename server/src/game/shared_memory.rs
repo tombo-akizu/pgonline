@@ -37,7 +37,8 @@ impl OutputMemory {
 
         for i in 0..2 {
             outputs[i].extend(self.angles[i].to_le_bytes().to_vec());
-            outputs[i].extend(self.bubble_positions[i].len().to_le_bytes().to_vec());
+            let len: u32 = self.bubble_positions[i].len().try_into().unwrap();
+            outputs[i].extend(len.to_le_bytes().to_vec());
             for position in &self.bubble_positions[i] {
                 outputs[i].extend(position.to_le_bytes_vec());
             }

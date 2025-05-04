@@ -21,6 +21,16 @@ impl Vec2 {
         }
     }
 
+    pub fn slope_down(angle: f32) -> Self {
+        if angle == 0. {
+            Self::new(0., 0.)
+        } else if angle > 0. {
+            Self::new(-f32::cos(angle * DEG2RAD), -f32::sin(angle * DEG2RAD))
+        } else {
+            Self::new(f32::cos(angle * DEG2RAD), f32::sin(angle * DEG2RAD))
+        }
+    }
+
     pub fn sqr_distance(&self, other: Vec2) -> f32 {
         (other.x - self.x).powf(2.) + (other.y - self.y).powf(2.)
     }

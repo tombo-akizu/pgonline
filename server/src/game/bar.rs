@@ -4,6 +4,7 @@ use crate::util::{Vec2, DEG2RAD, RAD2DEG};
 
 const MAX_ANGLE: f32 = 30.;
 const HALF_LENGTH: f32 = 1.;
+const ROTATE_SPEED: f32 = 1.;
 
 pub struct Bar {
     pub angle: f32,
@@ -20,7 +21,15 @@ impl Bar {
         }
     }
 
-    pub fn rotate(&mut self, delta: f32) {
+    pub fn rotate_positive(&mut self) {
+        self.rotate(ROTATE_SPEED);
+    }
+
+    pub fn rotate_negative(&mut self) {
+        self.rotate(-ROTATE_SPEED);
+    }
+
+    fn rotate(&mut self, delta: f32) {
         // requires: delta isn't too big or small.
         assert!(delta.abs() < 90.);
 
@@ -48,7 +57,11 @@ impl Bar {
         // require: `point` has been pushed up.
 
         let distance = self.center.distance(point);
-        self.center + Vec2::from_angle(self.angle) * distance
+        if point.x > self.center.x {
+            self.center + Vec2::from_angle(self.angle) * distance + Vec2::new(0., 0.01)
+        } else {
+            self.center - Vec2::from_angle(self.angle) * distance + Vec2::new(0., 0.01)
+        }
     }
 
     pub fn corrected_point(&self, departure: Vec2, delta: Vec2) -> Option<Vec2> {
@@ -62,7 +75,7 @@ impl Bar {
                 None
             } else {
                 let remain = y - (departure.y + delta.y);
-                Some(Vec2::new(departure.x, y) + Vec2::from_angle(self.angle) * remain)
+                Some(Vec2::new(departure.x, y + 0.01) + Vec2::slope_down(self.angle) * remain)
             }
         } else {
             None

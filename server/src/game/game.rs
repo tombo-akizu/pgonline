@@ -10,8 +10,8 @@ use super::bar::Bar;
 use super::bubble::Bubble;
 
 const BAR_LAYOUT: [Vec2; 3] = [
-    Vec2::new(-1., 2.),
-    Vec2::new(1., 1.5),
+    Vec2::new(-1., 5.),
+    Vec2::new(1., 3.),
     Vec2::new(0., 1.)
 ];
 
@@ -28,7 +28,7 @@ const BUBBLE_FRAME: [i32; 10] = [
     1000
 ];
 
-const BUBBLE_DELTA: Vec2 = Vec2::new(0., -0.5);
+const BUBBLE_DELTA: Vec2 = Vec2::new(0., -0.05);
 const DELETE_BORDER: f32 = 0.;
 
 pub async fn game(
@@ -53,24 +53,28 @@ pub async fn game(
 
         count += 1;
 
-        for i in 0..2 {
-            if input_memory.lock().await.right_inputs[i] {
-                for bar in &mut bars[i] {
-                    bar.rotate(0.1);
+        {
+            let input = input_memory.lock().await;
+            for i in 0..2 {
+            
+                if input.right_inputs[i] {
+                    for bar in &mut bars[i] {
+                        bar.rotate_positive();
+                    }
                 }
-            }
-            if input_memory.lock().await.left_inputs[i] {
-                for bar in &mut bars[i] {
-                    bar.rotate(-0.1);
+                if input.left_inputs[i] {
+                    for bar in &mut bars[i] {
+                        bar.rotate_negative();
+                    }
                 }
+    
             }
-
         }
 
         for i in 0..2 {
             for frame in BUBBLE_FRAME {
                 if frame == count {
-                    bubbles[i].push(Bubble::new(Vec2::new(1., 3.)));
+                    bubbles[i].push(Bubble::new(Vec2::new(-1., 7.)));
                 }
             }
 
@@ -83,11 +87,15 @@ pub async fn game(
             }
 
             for bubble in &mut bubbles[i] {
+                let mut flag = false;
                 for bar in &bars[i] {
                     if let Some(corrected_position) = bar.corrected_point(bubble.position, BUBBLE_DELTA) {
                         bubble.position = corrected_position;
+                        flag = true;
                         break;
                     }
+                }
+                if !flag {
                     bubble.position = bubble.position + BUBBLE_DELTA;
                 }
             }
