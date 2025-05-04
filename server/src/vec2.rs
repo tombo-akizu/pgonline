@@ -1,7 +1,6 @@
 use std::ops;
 
-pub const DEG2RAD: f32 = std::f32::consts::PI / 180.;
-pub const RAD2DEG: f32 = 1. / DEG2RAD;
+use crate::consts::DEG2RAD;
 
 #[derive(Clone, Copy)]
 pub struct Vec2 {

@@ -1,9 +1,10 @@
-use core::f32;
-
-use crate::util::{Vec2, DEG2RAD, RAD2DEG};
+use crate::vec2::Vec2;
+use crate::consts::{DEG2RAD, RAD2DEG};
+use super::consts::BUBBLE_GRAVITY;
 
 const MAX_ANGLE: f32 = 30.;
 const ROTATE_SPEED: f32 = 1.;
+const BAR_OFFSET: Vec2 = Vec2::new(0., BUBBLE_GRAVITY.y / 2.);  // BubbleがBarをすり抜けないよう、少し上に配置する。
 
 pub struct Bar {
     pub angle: f32,
@@ -59,9 +60,9 @@ impl Bar {
 
         let distance = self.center.distance(point);
         if point.x > self.center.x {
-            self.center + Vec2::from_angle(self.angle) * distance + Vec2::new(0., 0.001)
+            self.center + Vec2::from_angle(self.angle) * distance + BAR_OFFSET
         } else {
-            self.center - Vec2::from_angle(self.angle) * distance + Vec2::new(0., 0.001)
+            self.center - Vec2::from_angle(self.angle) * distance + BAR_OFFSET
         }
     }
 
@@ -72,7 +73,7 @@ impl Bar {
                     None
                 } else {
                     let remain = y - (departure.y + delta.y);
-                    Some(Vec2::new(departure.x, y + 0.001) + Vec2::slope_down(self.angle) * remain)
+                    Some(Vec2::new(departure.x, y) + BAR_OFFSET + Vec2::slope_down(self.angle) * remain)
                 }
             } else {
                 None
@@ -96,7 +97,7 @@ impl Bar {
             } else if x > self.center.x + f32::cos(self.angle * DEG2RAD) * self.half_length {
                 None
             } else {
-                let intersect = Vec2::new(x, y + 0.001);
+                let intersect = Vec2::new(x, y) + BAR_OFFSET;
                 let remain = departure + delta - intersect;
                 let inner_product = Vec2::inner_product(Vec2::slope_down(self.angle), remain);
                 Some(intersect + Vec2::slope_down(self.angle) * inner_product)

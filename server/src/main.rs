@@ -1,5 +1,6 @@
 mod game;
-mod util;
+mod consts;
+mod vec2;
 
 use std::collections::VecDeque;
 use std::{env, io::Error};

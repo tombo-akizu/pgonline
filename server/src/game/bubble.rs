@@ -1,4 +1,4 @@
-use crate::util::Vec2;
+use crate::vec2::Vec2;
 
 #[derive(Clone)]
 pub struct Bubble {

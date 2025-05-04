@@ -1,4 +1,4 @@
-use crate::util::Vec2;
+use crate::vec2::Vec2;
 
 pub struct InputMemory {
     pub right_inputs: [bool; 2],
