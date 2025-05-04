@@ -31,6 +31,10 @@ impl Vec2 {
         }
     }
 
+    pub fn inner_product(v0: Self, v1: Self) -> f32 {
+        v0.x * v1.x + v0.y * v1.y
+    }
+
     pub fn sqr_distance(&self, other: Vec2) -> f32 {
         (other.x - self.x).powf(2.) + (other.y - self.y).powf(2.)
     }
