@@ -3,7 +3,7 @@ mod consts;
 mod vec2;
 
 use std::collections::VecDeque;
-use std::{env, io::Error};
+use std::io::Error;
 use std::sync::Arc;
 
 use futures_util::stream::{SplitStream, SplitSink};
@@ -21,7 +21,7 @@ type Ws = WebSocketStream<tokio::net::TcpStream>;
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     let _ = env_logger::try_init();
-    let addr = env::args().nth(1).unwrap_or_else(|| "127.0.0.1:3000".to_string());
+    let addr = "0.0.0.0:8080".to_string();
 
     // Create the event loop and TCP listener we'll accept connections on.
     let try_socket = TcpListener::bind(&addr).await;
