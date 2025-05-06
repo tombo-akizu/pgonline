@@ -4,7 +4,7 @@ use super::consts::BUBBLE_GRAVITY;
 
 const MAX_ANGLE: f32 = 30.;
 const ROTATE_SPEED: f32 = 1.;
-const BAR_OFFSET: Vec2 = Vec2::new(0., BUBBLE_GRAVITY.y / 2.);  // BubbleがBarをすり抜けないよう、少し上に配置する。
+const BAR_OFFSET: Vec2 = Vec2::new(0., BUBBLE_GRAVITY.y.abs() / 2.);  // BubbleがBarをすり抜けないよう、少し上に配置する。
 
 pub struct Bar {
     pub angle: f32,
