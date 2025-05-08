@@ -22,7 +22,7 @@ public class Connection : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private async void Start()
     {
-        this.websocket = new WebSocket("ws://localhost:8080");
+        this.websocket = new WebSocket("ws://54.150.123.87:8080");
         this.observer = FindFirstObjectByType<InputObserver>();
 
         List<GameObject> bubbleObjects0 = new List<GameObject>();
