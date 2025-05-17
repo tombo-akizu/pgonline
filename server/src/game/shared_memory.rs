@@ -1,4 +1,5 @@
 use crate::vec2::Vec2;
+use super::bubble::BubbleColor;
 
 pub struct InputMemory {
     pub right_inputs: [bool; 2],
@@ -21,14 +22,18 @@ impl InputMemory {
 
 pub struct OutputMemory {
     pub angles: [f32; 2],
+    pub scores: [i8; 2],
     pub bubble_positions: Vec<Vec<Vec2>>,
+    pub bubble_colors: Vec<Vec<BubbleColor>>,
 }
 
 impl OutputMemory {
     pub fn new() -> Self {
         Self {
             angles: [0., 0.],
-            bubble_positions: vec![vec![], vec![]]
+            scores: [0, 0],
+            bubble_positions: vec![vec![], vec![]],
+            bubble_colors: vec![vec![], vec![]]
         }
     }
 
@@ -37,10 +42,13 @@ impl OutputMemory {
 
         for i in 0..2 {
             outputs[i].extend(self.angles[i].to_le_bytes().to_vec());
-            let len: u32 = self.bubble_positions[i].len().try_into().unwrap();
+            outputs[i].extend(self.scores[i].to_le_bytes().to_vec());
+            let len: u8 = self.bubble_positions[i].len().try_into().unwrap();
             outputs[i].extend(len.to_le_bytes().to_vec());
-            for position in &self.bubble_positions[i] {
+
+            for (position, color) in self.bubble_positions[i].iter().zip(self.bubble_colors[i].iter()) {
                 outputs[i].extend(position.to_le_bytes_vec());
+                outputs[i].extend(color.to_le_bytes_vec());
             }
         }
 

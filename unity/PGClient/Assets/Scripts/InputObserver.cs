@@ -24,7 +24,7 @@ public class InputObserver : MonoBehaviour
 
     public byte[] PopInputByte()
     {
-        byte output = 0;
+        byte output = 0;    // Output of this method.
         if (this.rightIsInputed)
         {
             output |= 1 << 0;

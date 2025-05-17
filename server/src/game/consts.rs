@@ -1,4 +1,5 @@
 use crate::vec2::Vec2;
+use super::bubble::BubbleColor;
 
 pub const BAR_LAYOUT: [Vec2; 6] = [
     Vec2::new(0., 10.6),
@@ -31,8 +32,25 @@ pub const BUBBLE_SPAWN_FRAME: [i32; 10] = [
     1000
 ];
 
+pub const BUBBLE_COLORS: [BubbleColor; 10] = [
+    BubbleColor::Red,
+    BubbleColor::White,
+    BubbleColor::White,
+    BubbleColor::Red,
+    BubbleColor::White,
+    BubbleColor::White,
+    BubbleColor::Red,
+    BubbleColor::Red,
+    BubbleColor::Red,
+    BubbleColor::White
+];
+
 pub const BUBBLE_SPAWN_POSITION: Vec2 = Vec2::new(0., 15.);
 pub const INERTIA: f32 = 0.96;
 
 pub const BUBBLE_GRAVITY: Vec2 = Vec2::new(0., -0.01);
 pub const DELETE_BORDER: f32 = 0.;
+
+pub const RED_CONTAINER_MIN: f32 = -3.;
+pub const WHITE_CONTAINER_MIN: f32 = 1.;
+pub const CONTAINER_WIDTH: f32 = 2.0;
