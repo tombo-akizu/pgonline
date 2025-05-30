@@ -15,6 +15,20 @@ public class Connection : MonoBehaviour
     [SerializeField] PlayerGame playerGame;
     [SerializeField] PlayerGame opponentGame;
 
+    private StagingController stagingController;
+
+    private enum ControlByte
+    {
+        GameState,
+        GameStart,
+        GameEnd
+    }
+
+    private void Awake()
+    {
+        this.stagingController = FindFirstObjectByType<StagingController>();
+    }
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private async void Start()
     {
@@ -42,9 +56,20 @@ public class Connection : MonoBehaviour
 
         this.websocket.OnMessage += (bytes) =>
         {
-            DecodedState state = new(bytes);
-            this.playerGame.ReflectGameState(state.GetPlayerState());
-            this.opponentGame.ReflectGameState(state.GetOpponentState());
+            switch (bytes[0])   // 第0バイトは制御バイト
+            {
+                case (byte)ControlByte.GameState:
+                    DecodedState state = new(bytes[1..bytes.Length]);
+                    this.playerGame.ReflectGameState(state.GetPlayerState());
+                    this.opponentGame.ReflectGameState(state.GetOpponentState());
+                    break;
+                case (byte)ControlByte.GameStart:
+                    this.stagingController.StartStaging();
+                    break;
+                case (byte)ControlByte.GameEnd:
+                    this.stagingController.EndStaging();
+                    break;
+            }
         };
 
         this.InvokeRepeating(nameof(SendWebSocketMessage), 0.0f, FPS);
