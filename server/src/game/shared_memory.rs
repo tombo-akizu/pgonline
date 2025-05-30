@@ -85,15 +85,18 @@ impl GameStateMemory {
             }
         }
 
-        let [mut output1, mut output2] = outputs;
+        let [output1, output2] = outputs;
+        let mut output = vec![0x00];
         match index {
             0 => {
-                output1.extend(output2);
-                output1
+                output.extend(output1);
+                output.extend(output2);
+                output
             },
             1 => {
-                output2.extend(output1);
-                output2
+                output.extend(output2);
+                output.extend(output1);
+                output
             },
             _ => {
                 panic!();
