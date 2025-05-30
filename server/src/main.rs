@@ -14,7 +14,7 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::{protocol::Message, Bytes};
 
-use game::{InputMemory, OutputMemory};
+use game::{InputMemory, GameStateMemory};
 
 type Ws = WebSocketStream<tokio::net::TcpStream>;
 
@@ -52,19 +52,19 @@ async fn game_2p(players: [Ws; 2]) {
     let [(write1, read1), (write2, read2)] = players.map(|ws| ws.split());
 
     let input_memory = Arc::new(Mutex::new(InputMemory::new()));
-    let output_memory = Arc::new(Mutex::new(OutputMemory::new()));
+    let game_state_memory = Arc::new(Mutex::new(GameStateMemory::GameStart));
 
 
     // start game thread
-    tokio::spawn(game::game(input_memory.clone(), output_memory.clone()));
+    tokio::spawn(game::game(input_memory.clone(), game_state_memory.clone()));
 
     // spawn writing to the thread
     tokio::spawn(update_input(input_memory.clone(), read1, 0));
     tokio::spawn(update_input(input_memory.clone(), read2, 1));
 
     // spawn reading from the thread
-    tokio::spawn(send_output(output_memory.clone(), write1, 0));
-    tokio::spawn(send_output(output_memory.clone(), write2, 1));
+    tokio::spawn(send_output(game_state_memory.clone(), write1, 0));
+    tokio::spawn(send_output(game_state_memory.clone(), write2, 1));
 }
 
 
@@ -93,15 +93,33 @@ async fn update_input(
     }
 }
 
+// 送信機として働く非同期タスク。
 async fn send_output(
-    output_memory: Arc<Mutex<OutputMemory>>,
+    game_state_memory: Arc<Mutex<GameStateMemory>>,
     mut write: SplitSink<WebSocketStream<TcpStream>, Message>,
     index: usize
 ) {
     loop {
+        // `send`を待つ間ロックを持ち続けないようにキャッシュする。
+        let bytes = Bytes::from(game_state_memory.lock().await.encode(index));
+
         let send_result = write
-            .send(Message::Binary(Bytes::from(output_memory.lock().await.encode(index))))
+            .send(Message::Binary(bytes))
             .await;
+
+        {
+            let mut mem = game_state_memory.lock().await;
+            match *mem {
+                GameStateMemory::GameStart => {
+                    *mem = GameStateMemory::new_game_state();
+                },
+                GameStateMemory::GameEnd => {
+                    break;
+                },
+                _ => {}
+            }
+        }
+
         match send_result {
             Err(tokio_tungstenite::tungstenite::Error::Protocol(tokio_tungstenite::tungstenite::error::ProtocolError::SendAfterClosing)) => {
                 break;

@@ -1,5 +1,5 @@
 use crate::vec2::Vec2;
-use super::bubble::BubbleColor;
+use super::{bubble::BubbleColor, bubble_schedule::{BubbleSchedule, BubbleScheduleUnit}};
 
 pub const BAR_LAYOUT: [Vec2; 6] = [
     Vec2::new(0., 10.6),
@@ -19,30 +19,19 @@ pub const BAR_HALF_LEN: [f32; 6] = [
     1.36
 ];
 
-pub const BUBBLE_SPAWN_FRAME: [i32; 10] = [
-    100,
-    200,
-    300,
-    400,
-    500,
-    600,
-    700,
-    800,
-    900,
-    1000
-];
-
-pub const BUBBLE_COLORS: [BubbleColor; 10] = [
-    BubbleColor::Red,
-    BubbleColor::White,
-    BubbleColor::White,
-    BubbleColor::Red,
-    BubbleColor::White,
-    BubbleColor::White,
-    BubbleColor::Red,
-    BubbleColor::Red,
-    BubbleColor::Red,
-    BubbleColor::White
+pub const BUBBLE_NUM: usize = 10;
+pub const BUBBLE_SCHEDULE: BubbleSchedule = [
+    BubbleScheduleUnit::new(100,  Some(BubbleColor::Red  )),
+    BubbleScheduleUnit::new(200,  Some(BubbleColor::White)),
+    BubbleScheduleUnit::new(300,  Some(BubbleColor::White)),
+    BubbleScheduleUnit::new(400,  Some(BubbleColor::Red  )),
+    BubbleScheduleUnit::new(500,  Some(BubbleColor::White)),
+    BubbleScheduleUnit::new(600,  Some(BubbleColor::White)),
+    BubbleScheduleUnit::new(700,  Some(BubbleColor::Red  )),
+    BubbleScheduleUnit::new(800,  Some(BubbleColor::Red  )),
+    BubbleScheduleUnit::new(900,  Some(BubbleColor::Red  )),
+    BubbleScheduleUnit::new(1000, Some(BubbleColor::White)),
+    BubbleScheduleUnit::new(1200, None)
 ];
 
 pub const BUBBLE_SPAWN_POSITION: Vec2 = Vec2::new(0., 15.);
