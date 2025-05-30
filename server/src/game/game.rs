@@ -64,12 +64,12 @@ pub async fn game(
                 
                     if input.right_inputs[i] {
                         for bar in &mut bars[i] {
-                            bar.rotate_positive();
+                            bar.rotate_negative();
                         }
                     }
                     if input.left_inputs[i] {
                         for bar in &mut bars[i] {
-                            bar.rotate_negative();
+                            bar.rotate_positive();
                         }
                     }
         
