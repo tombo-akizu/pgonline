@@ -9,7 +9,7 @@ public class Connection : MonoBehaviour
 {
     private const float FPS = 1f / 30;
 
-    private WebSocket websocket;
+    private WebSocket websocket = null;
     private InputObserver observer;
 
     [SerializeField] PlayerGame playerGame;
@@ -27,14 +27,16 @@ public class Connection : MonoBehaviour
     private void Awake()
     {
         this.stagingController = FindFirstObjectByType<StagingController>();
+        this.observer = FindFirstObjectByType<InputObserver>();
     }
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    private async void Start()
+    // Reactから呼び出される。
+    public async void Initialize(string ipAddress)
     {
-        this.websocket = new WebSocket("ws://54.150.123.87:8080");
-        //this.websocket = new WebSocket("ws://localhost:8080");
-        this.observer = FindFirstObjectByType<InputObserver>();
+        // サーバのIPアドレスをReactから受け取る。
+        // Unity AppのビルドはReactと比べてかなり長い時間を要するため、ビルド頻度を減らしたい。
+        // 開発時にIPアドレスを変更する際、Unity Appを再ビルドしなくてよいよう、IPアドレスをReactから受け取っている。
+        this.websocket = new WebSocket("ws://" + ipAddress);
 
         List<GameObject> bubbleObjects0 = new();
         List<GameObject> bubbleObjects1 = new();
@@ -74,15 +76,17 @@ public class Connection : MonoBehaviour
 
         this.InvokeRepeating(nameof(SendWebSocketMessage), 0.0f, FPS);
 
-        // waiting for messages
+        // メッセージを待機する。
         await this.websocket.Connect();
     }
 
-    // Update is called once per frame
     private void Update()
     {
 #if !UNITY_WEBGL || UNITY_EDITOR
-        this.websocket.DispatchMessageQueue();
+        if (this.websocket != null)
+        {
+            this.websocket.DispatchMessageQueue();
+        }
 #endif
     }
 
@@ -96,7 +100,10 @@ public class Connection : MonoBehaviour
 
     private async void OnApplicationQuit()
     {
-        await this.websocket.Close();
+        if (this.websocket != null)
+        {
+            await this.websocket.Close();
+        }
     }
 
 }

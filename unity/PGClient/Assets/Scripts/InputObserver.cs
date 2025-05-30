@@ -8,13 +8,11 @@ public class InputObserver : MonoBehaviour
 
     private InputAction move;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    private void Start()
+    private void Awake()
     {
         this.move = FindFirstObjectByType<PlayerInput>().actions["Move"];
     }
 
-    // Update is called once per frame
     private void Update()
     {
         Vector2 input = this.move.ReadValue<Vector2>();
