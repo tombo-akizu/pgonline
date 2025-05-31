@@ -42,7 +42,7 @@ pub async fn game(
         )
     ];
 
-    let mut scores: [i8; 2] = [0, 0];
+    let mut server_scores: [i8; 2] = [0, 0];
 
     loop {
         let start = std::time::Instant::now();
@@ -121,7 +121,7 @@ pub async fn game(
                     for container in &containers {
                         if container.in_container(bubble.position)
                             && container.is_correct_container(bubble.color) {
-                            scores[i] += 1;
+                            server_scores[i] += 1;
                         }
                     }
                 }
@@ -141,7 +141,7 @@ pub async fn game(
             } = *game_state_memory.lock().await {
                 for i in 0..2 {
                     angles[i] = bars[i][0].angle;
-                    scores[i] = scores[i];
+                    scores[i] = server_scores[i];
                     bubble_positions[i] = bubbles[i]
                         .iter()
                         .map(|bubble| bubble.position)

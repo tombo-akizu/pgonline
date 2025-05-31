@@ -101,23 +101,32 @@ async fn send_output(
 ) {
     loop {
         // `send`を待つ間ロックを持ち続けないようにキャッシュする。
-        let bytes = Bytes::from(game_state_memory.lock().await.encode(index));
-
-        let send_result = write
-            .send(Message::Binary(bytes))
-            .await;
+        // `is_game_end`を使用するのは`send`の後だが、
+        // 処理順に依存しないよう`bytes`と同時にキャッシュする。
+        let bytes: Option<Bytes>;
+        let mut is_game_end = false;
 
         {
-            let mut mem = game_state_memory.lock().await;
-            match *mem {
+            let mut game_state_memory = game_state_memory.lock().await;
+            bytes = Some(Bytes::from(game_state_memory.encode(index)));
+
+            match *game_state_memory {
                 GameStateMemory::GameStart => {
-                    *mem = GameStateMemory::new_game_state();
+                    *game_state_memory = GameStateMemory::new_game_state();
                 },
                 GameStateMemory::GameEnd => {
-                    break;
+                    is_game_end = true;
                 },
                 _ => {}
             }
+        }
+
+        let send_result = write
+            .send(Message::Binary(bytes.unwrap()))
+            .await;
+
+        if is_game_end {
+            break;
         }
 
         match send_result {
