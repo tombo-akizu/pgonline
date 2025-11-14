@@ -1,6 +1,7 @@
 mod game;
 mod consts;
 mod vec2;
+mod control_byte;
 
 use std::collections::VecDeque;
 use std::io::Error;
@@ -10,13 +11,14 @@ use futures_util::stream::{SplitStream, SplitSink};
 use futures_util::{SinkExt, StreamExt};
 use log::info;
 use tokio::sync::Mutex;
+use tokio::time::{self, Duration};
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::{protocol::Message, Bytes};
 
 use game::{InputMemory, GameStateMemory};
 
-type Ws = WebSocketStream<tokio::net::TcpStream>;
+type Socket = (SplitSink<WebSocketStream<TcpStream>, Message>, SplitStream<WebSocketStream<TcpStream>>);
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -28,17 +30,22 @@ async fn main() -> Result<(), Error> {
     let listener = try_socket.expect("Failed to bind");
     info!("Listening on: {}", addr);
 
-    let waiting_clients = Arc::new(Mutex::new(VecDeque::<Ws>::new()));
+    let waiting_clients = Arc::new(Mutex::new(VecDeque::<Socket>::new()));
 
     while let Ok((stream, _)) = listener.accept().await {
         let ws_stream = tokio_tungstenite::accept_async(stream)
             .await
             .expect("Error during the websocket handshake occurred");
+        let socket = ws_stream.split();
 
-        waiting_clients.lock().await.push_back(ws_stream);
+        waiting_clients.lock().await.push_back(socket);
         info!("{}", waiting_clients.lock().await.len());
         if waiting_clients.lock().await.len() >= 2 {
-            let p1 = waiting_clients.lock().await.pop_front().unwrap();
+            let mut p1 = waiting_clients.lock().await.pop_front().unwrap();
+            if !is_alive(&mut p1).await {
+                info!("Waiting session is dead");
+                continue;
+            }
             let p2 = waiting_clients.lock().await.pop_front().unwrap();
             let players = [p1, p2];
             tokio::spawn(game_2p(players));
@@ -48,8 +55,34 @@ async fn main() -> Result<(), Error> {
     Ok(())
 }
 
-async fn game_2p(players: [Ws; 2]) {
-    let [(write1, read1), (write2, read2)] = players.map(|ws| ws.split());
+// `Ws`の接続が生きているかを判定する。
+async fn is_alive((_write, read): &mut Socket) -> bool {
+    loop {
+        // 非ブロッキングに next() を試す
+        match time::timeout(Duration::ZERO, read.next()).await {
+            Ok(Some(Ok(msg))) => {
+                match msg {
+                    Message::Close(_) => { return false; },
+                    _ => { continue; }
+                }
+            }
+            Ok(Some(Err(e))) => {
+                log::warn!("websocket error: {:?}", e);
+                return false;
+            }
+            Ok(None) => {
+                return true;
+            }
+            Err(_) => {
+                // timeout → 新しいメッセージはない
+                return true;
+            }
+        }
+    }
+}
+
+async fn game_2p(players: [Socket; 2]) {
+    let [(write1, read1), (write2, read2)] = players;
 
     let input_memory = Arc::new(Mutex::new(InputMemory::new()));
     let game_state_memory = Arc::new(Mutex::new(GameStateMemory::GameStart));
@@ -76,7 +109,7 @@ async fn update_input(
     while let Some(msg_result) = read.next().await {
         match msg_result {
             Ok(Message::Binary(data)) => {
-                input_memory.lock().await.update(*data.get(0).unwrap(), index);
+                input_memory.lock().await.update(*data.first().unwrap(), index);
             }
 
             Ok(Message::Text(text)) => {

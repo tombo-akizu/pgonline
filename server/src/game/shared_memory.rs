@@ -1,4 +1,5 @@
 use crate::vec2::Vec2;
+use crate::control_byte::ControlByte;
 use super::bubble::BubbleColor;
 
 // クライアントの操作を書き込み、ゲームから読み取るための共有メモリ。
@@ -45,8 +46,8 @@ impl GameStateMemory {
 
     pub fn encode(&self, index: usize) -> Vec<u8> {
         match self {
-            Self::GameStart => vec![0x01],
-            Self::GameEnd => vec![0x02],
+            Self::GameStart => vec![ControlByte::GameStart as u8],
+            Self::GameEnd => vec![ControlByte::GameEnd as u8],
             Self::OnGoing { 
                 angles,
                 scores,
