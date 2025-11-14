@@ -1,24 +1,27 @@
-mod game;
 mod consts;
-mod vec2;
 mod control_byte;
+mod game;
+mod vec2;
 
 use std::collections::VecDeque;
 use std::io::Error;
 use std::sync::Arc;
 
-use futures_util::stream::{SplitStream, SplitSink};
+use futures_util::stream::{SplitSink, SplitStream};
 use futures_util::{SinkExt, StreamExt};
 use log::info;
+use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::Mutex;
 use tokio::time::{self, Duration};
-use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::WebSocketStream;
-use tokio_tungstenite::tungstenite::{protocol::Message, Bytes};
+use tokio_tungstenite::tungstenite::{Bytes, protocol::Message};
 
-use game::{InputMemory, GameStateMemory};
+use game::{GameStateMemory, InputMemory};
 
-type Socket = (SplitSink<WebSocketStream<TcpStream>, Message>, SplitStream<WebSocketStream<TcpStream>>);
+type Socket = (
+    SplitSink<WebSocketStream<TcpStream>, Message>,
+    SplitStream<WebSocketStream<TcpStream>>,
+);
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -60,12 +63,14 @@ async fn is_alive((_write, read): &mut Socket) -> bool {
     loop {
         // 非ブロッキングに next() を試す
         match time::timeout(Duration::ZERO, read.next()).await {
-            Ok(Some(Ok(msg))) => {
-                match msg {
-                    Message::Close(_) => { return false; },
-                    _ => { continue; }
+            Ok(Some(Ok(msg))) => match msg {
+                Message::Close(_) => {
+                    return false;
                 }
-            }
+                _ => {
+                    continue;
+                }
+            },
             Ok(Some(Err(e))) => {
                 log::warn!("websocket error: {:?}", e);
                 return false;
@@ -87,7 +92,6 @@ async fn game_2p(players: [Socket; 2]) {
     let input_memory = Arc::new(Mutex::new(InputMemory::new()));
     let game_state_memory = Arc::new(Mutex::new(GameStateMemory::GameStart));
 
-
     // start game thread
     tokio::spawn(game::game(input_memory.clone(), game_state_memory.clone()));
 
@@ -100,27 +104,26 @@ async fn game_2p(players: [Socket; 2]) {
     tokio::spawn(send_output(game_state_memory.clone(), write2, 1));
 }
 
-
 async fn update_input(
     input_memory: Arc<Mutex<InputMemory>>,
     mut read: SplitStream<WebSocketStream<TcpStream>>,
-    index: usize
+    index: usize,
 ) {
     while let Some(msg_result) = read.next().await {
         match msg_result {
             Ok(Message::Binary(data)) => {
-                input_memory.lock().await.update(*data.first().unwrap(), index);
+                input_memory
+                    .lock()
+                    .await
+                    .update(*data.first().unwrap(), index);
             }
-
             Ok(Message::Text(text)) => {
                 info!("Received text: {}", text);
             }
-
             Ok(Message::Close(_)) => {
                 info!("Connection closed");
                 break;
             }
-
             _ => {}
         }
     }
@@ -130,7 +133,7 @@ async fn update_input(
 async fn send_output(
     game_state_memory: Arc<Mutex<GameStateMemory>>,
     mut write: SplitSink<WebSocketStream<TcpStream>, Message>,
-    index: usize
+    index: usize,
 ) {
     loop {
         // `send`を待つ間ロックを持ち続けないようにキャッシュする。
@@ -146,27 +149,25 @@ async fn send_output(
             match *game_state_memory {
                 GameStateMemory::GameStart => {
                     *game_state_memory = GameStateMemory::new_game_state();
-                },
+                }
                 GameStateMemory::GameEnd => {
                     is_game_end = true;
-                },
+                }
                 _ => {}
             }
         }
 
-        let send_result = write
-            .send(Message::Binary(bytes.unwrap()))
-            .await;
+        let send_result = write.send(Message::Binary(bytes.unwrap())).await;
 
         if is_game_end {
             break;
         }
 
-        match send_result {
-            Err(tokio_tungstenite::tungstenite::Error::Protocol(tokio_tungstenite::tungstenite::error::ProtocolError::SendAfterClosing)) => {
-                break;
-            }
-            _ => {}
+        if let Err(tokio_tungstenite::tungstenite::Error::Protocol(
+            tokio_tungstenite::tungstenite::error::ProtocolError::SendAfterClosing,
+        )) = send_result
+        {
+            break;
         }
     }
 }

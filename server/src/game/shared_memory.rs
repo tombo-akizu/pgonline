@@ -1,6 +1,6 @@
-use crate::vec2::Vec2;
-use crate::control_byte::ControlByte;
 use super::bubble::BubbleColor;
+use crate::control_byte::ControlByte;
+use crate::vec2::Vec2;
 
 // クライアントの操作を書き込み、ゲームから読み取るための共有メモリ。
 pub struct InputMemory {
@@ -31,7 +31,7 @@ pub enum GameStateMemory {
         bubble_colors: Vec<Vec<BubbleColor>>,
     },
     GameStart,
-    GameEnd
+    GameEnd,
 }
 
 impl GameStateMemory {
@@ -40,7 +40,7 @@ impl GameStateMemory {
             angles: [0., 0.],
             scores: [0, 0],
             bubble_positions: vec![vec![], vec![]],
-            bubble_colors: vec![vec![], vec![]]
+            bubble_colors: vec![vec![], vec![]],
         }
     }
 
@@ -48,20 +48,12 @@ impl GameStateMemory {
         match self {
             Self::GameStart => vec![ControlByte::GameStart as u8],
             Self::GameEnd => vec![ControlByte::GameEnd as u8],
-            Self::OnGoing { 
+            Self::OnGoing {
                 angles,
                 scores,
                 bubble_positions,
-                bubble_colors
-            } => {
-                Self::encode_game_state(
-                    index, 
-                    angles, 
-                    scores, 
-                    bubble_positions, 
-                    bubble_colors
-                )
-            }
+                bubble_colors,
+            } => Self::encode_game_state(index, angles, scores, bubble_positions, bubble_colors),
         }
     }
 
@@ -69,8 +61,8 @@ impl GameStateMemory {
         index: usize,
         angles: &[f32; 2],
         scores: &[i8; 2],
-        bubble_positions: &Vec<Vec<Vec2>>,
-        bubble_colors: &Vec<Vec<BubbleColor>>
+        bubble_positions: &[Vec<Vec2>],
+        bubble_colors: &[Vec<BubbleColor>],
     ) -> Vec<u8> {
         let mut outputs = [vec![], vec![]];
 
@@ -93,12 +85,12 @@ impl GameStateMemory {
                 output.extend(output1);
                 output.extend(output2);
                 output
-            },
+            }
             1 => {
                 output.extend(output2);
                 output.extend(output1);
                 output
-            },
+            }
             _ => {
                 panic!();
             }

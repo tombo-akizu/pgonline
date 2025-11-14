@@ -1,6 +1,6 @@
-use crate::vec2::Vec2;
-use super::consts::DELETE_BORDER;
 use super::bubble::BubbleColor;
+use super::consts::DELETE_BORDER;
+use crate::vec2::Vec2;
 
 pub struct Container {
     min_end: f32,
@@ -13,7 +13,7 @@ impl Container {
         Self {
             min_end,
             max_end,
-            color
+            color,
         }
     }
 

@@ -3,18 +3,18 @@ use crate::vec2::Vec2;
 #[derive(Clone, Copy, PartialEq)]
 pub enum BubbleColor {
     Red,
-    White
+    White,
 }
 
 impl BubbleColor {
-    pub fn to_le_bytes_vec(&self) -> Vec<u8> {
+    pub fn to_le_bytes_vec(self) -> Vec<u8> {
         let mut output = vec![];
         match self {
             BubbleColor::Red => {
-                output.extend((0 as u8).to_le_bytes().to_vec());
-            },
+                output.extend((0_u8).to_le_bytes().to_vec());
+            }
             BubbleColor::White => {
-                output.extend((1 as u8).to_le_bytes().to_vec());
+                output.extend((1_u8).to_le_bytes().to_vec());
             }
         }
         output
@@ -30,10 +30,10 @@ pub struct Bubble {
 
 impl Bubble {
     pub fn new(point: Vec2, color: BubbleColor) -> Self {
-        Self { 
+        Self {
             position: point,
             previous_velocity: Vec2::new(0., 0.),
-            color
+            color,
         }
     }
 

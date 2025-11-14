@@ -1,10 +1,10 @@
-mod game;
 mod bar;
 mod bubble;
-mod shared_memory;
+mod bubble_schedule;
 mod consts;
 mod container;
-mod bubble_schedule;
+mod shared_memory;
+mod task;
 
-pub use game::game;
-pub use shared_memory::{InputMemory, GameStateMemory};
+pub use shared_memory::{GameStateMemory, InputMemory};
+pub use task::game;

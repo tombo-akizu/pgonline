@@ -1,16 +1,16 @@
-use crate::vec2::Vec2;
-use crate::consts::{DEG2RAD, RAD2DEG};
 use super::consts::BUBBLE_GRAVITY;
+use crate::consts::{DEG2RAD, RAD2DEG};
+use crate::vec2::Vec2;
 
 const MAX_ANGLE: f32 = 30.;
 const ROTATE_SPEED: f32 = 1.;
-const BAR_OFFSET: Vec2 = Vec2::new(0., BUBBLE_GRAVITY.y.abs() / 2.);  // BubbleがBarをすり抜けないよう、少し上に配置する。
+const BAR_OFFSET: Vec2 = Vec2::new(0., BUBBLE_GRAVITY.y.abs() / 2.); // BubbleがBarをすり抜けないよう、少し上に配置する。
 
 pub struct Bar {
     pub angle: f32,
     half_length: f32,
     previous_angle: f32,
-    center: Vec2
+    center: Vec2,
 }
 
 impl Bar {
@@ -19,7 +19,7 @@ impl Bar {
             angle: 0.,
             half_length,
             previous_angle: 0.,
-            center
+            center,
         }
     }
 
@@ -37,21 +37,18 @@ impl Bar {
 
         self.previous_angle = self.angle;
         self.angle += delta;
-        if self.angle > MAX_ANGLE {
-            self.angle = MAX_ANGLE;
-        }
-        if self.angle < -MAX_ANGLE {
-            self.angle = -MAX_ANGLE;
-        }
+        self.angle = self.angle.clamp(-MAX_ANGLE, MAX_ANGLE);
     }
 
     pub fn has_pushed_up(&self, point: Vec2) -> bool {
-        if self.center.sqr_distance(point) > self.half_length { false }
-        else if point.x == self.center.x { false }
-        else {
+        if self.center.sqr_distance(point) > self.half_length || point.x == self.center.x {
+            false
+        } else {
             let angle = f32::atan((point - self.center).slope()) * RAD2DEG;
             (point.x > self.center.x && (angle >= self.previous_angle) && (angle < self.angle))
-            || (point.x < self.center.x && (angle <= self.previous_angle) && (angle > self.angle))
+                || (point.x < self.center.x
+                    && (angle <= self.previous_angle)
+                    && (angle > self.angle))
         }
     }
 
@@ -73,7 +70,11 @@ impl Bar {
                     None
                 } else {
                     let remain = y - (departure.y + delta.y);
-                    Some(Vec2::new(departure.x, y) + BAR_OFFSET + Vec2::slope_down(self.angle) * remain)
+                    Some(
+                        Vec2::new(departure.x, y)
+                            + BAR_OFFSET
+                            + Vec2::slope_down(self.angle) * remain,
+                    )
                 }
             } else {
                 None
@@ -88,13 +89,11 @@ impl Bar {
             let x = (b_bar - b_delta) / (a_delta - a_bar);
             let y = a_delta * x + b_delta;
 
-            if x < departure.x && x < (departure.x + delta.x) {
-                None
-            } else if x > departure.x && x > (departure.x + delta.x) {
-                None
-            } else if x < self.center.x - f32::cos(self.angle * DEG2RAD) * self.half_length {
-                None
-            } else if x > self.center.x + f32::cos(self.angle * DEG2RAD) * self.half_length {
+            if (x < departure.x && x < (departure.x + delta.x))
+                || (x > departure.x && x > (departure.x + delta.x))
+                || (x < self.center.x - f32::cos(self.angle * DEG2RAD) * self.half_length)
+                || (x > self.center.x + f32::cos(self.angle * DEG2RAD) * self.half_length)
+            {
                 None
             } else {
                 let intersect = Vec2::new(x, y) + BAR_OFFSET;
